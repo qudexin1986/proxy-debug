@@ -21,10 +21,12 @@
 */
 class PD
 {
-    public static $debugItemCount = 0;
-    public static $debugGroupCount = 0;
-    public static $group = array();
-    public static $start;
+    protected static $debugItemCount = 0;
+    protected static $debugGroupCount = 0;
+    protected static $group = array();
+    protected static $start;
+    protected static $offset = 0;
+    protected static $varNameString = null;
 
     /**
      * getVarName
@@ -37,18 +39,26 @@ class PD
      */
     protected static function getVarName()
     {
-        $trace = debug_backtrace();
-        $line = file($trace[3]['file']);
+        if (self::$varNameString === null) {
+            $trace = debug_backtrace();
+            $line = file($trace[3]['file']);
+            self::$varNameString = $line[$trace[3]['line']-1];
+        }
+
         preg_match(
-            '~PD::\w{4,5}\(\$([\w\d_]+)\)~',
-            $line[$trace[3]['line']-1],
-            $matches
+            '~\$([\w\d_]+)~',
+            self::$varNameString,
+            $matches,
+            PREG_OFFSET_CAPTURE,
+            self::$offset
         );
+
         if (!isset($matches[1])) {
             throw new Exception('Error Params, should use $variable as params', 1);
         }
+        self::$offset = $matches[1][1];
 
-        return $matches[1];
+        return $matches[1][0];
     }
 
     /**
@@ -90,6 +100,8 @@ class PD
     {
         $func = ['info'=>'I', 'warn'=>'W', 'error'=>'E'];
         if (isset($func[$name])) {
+            self::$offset = 0;
+            self::$varNameString = null;
             foreach ($args as $key => $arg) {
                 self::func($func[$name], $arg);
             }

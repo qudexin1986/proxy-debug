@@ -27,7 +27,8 @@ require the file `PD.php`, and use:
 ~~~
 require 'PD.php';
 $name = 'rokety';
-PD::info($name);
+$foo  = 'Hi';
+PD::info($name, $foo);
 PD::warn($name);
 PD::error($name);
 //use group
